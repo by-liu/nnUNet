@@ -136,6 +136,7 @@ def main():
     plans_file, output_folder_name, dataset_directory, batch_dice, stage, \
     trainer_class = get_default_configuration(network, task, network_trainer, plans_identifier)
 
+
     if trainer_class is None:
         raise RuntimeError("Could not find trainer class in nnunet.training.network_training")
 

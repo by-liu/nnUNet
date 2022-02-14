@@ -73,7 +73,8 @@ def get_default_configuration(network, task, network_trainer, plans_identifier=d
         print("I am using batch dice + CE loss")
     else:
         batch_dice = False
-        print("I am using sample dice + CE loss")
+        print("I am using sample loss")
+        # print("I am using sample dice + CE loss")
 
     print("\nI am using data from this folder: ", join(dataset_directory, plans['data_identifier']))
     print("###############################################")
