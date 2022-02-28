@@ -9,11 +9,11 @@ class nnUNetTrainerV2_Loss_CEL1(nnUNetTrainerV2):
         super().__init__(plans_file, fold, output_folder, dataset_directory, batch_dice, stage,
                                               unpack_data, deterministic, fp16)
 
-        self.max_num_epochs = 100
+        self.max_num_epochs = 500
         self.initial_lr = 1e-2
         loss_params = {
             "mode": "multiclass",
-            "alpha": 1.0,
+            "alpha": 0.1,
             "temp": 20
         }
         self.loss = CrossEntropyWithL1(**loss_params)

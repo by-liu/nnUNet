@@ -157,7 +157,7 @@ def get_tp_fp_fn_tn(net_output, gt, axes=None, mask=None, square=False):
 
 
 class SoftDiceLoss(nn.Module):
-    def __init__(self, apply_nonlin=None, batch_dice=False, do_bg=True, smooth=1.):
+    def __init__(self, apply_nonlin=None, batch_dice=False, do_bg=True, smooth=1., log_dice=False):
         """
         """
         super(SoftDiceLoss, self).__init__()
@@ -166,6 +166,7 @@ class SoftDiceLoss(nn.Module):
         self.batch_dice = batch_dice
         self.apply_nonlin = apply_nonlin
         self.smooth = smooth
+        self.log_dice = log_dice
 
     def forward(self, x, y, loss_mask=None):
         shp_x = x.shape
@@ -192,7 +193,10 @@ class SoftDiceLoss(nn.Module):
                 dc = dc[:, 1:]
         dc = dc.mean()
 
-        return 1-dc
+        if not self.log_dice:
+            return 1-dc
+        else:
+            return - torch.log(dc + 1e-8)
 
 
 class IoULoss(nn.Module):

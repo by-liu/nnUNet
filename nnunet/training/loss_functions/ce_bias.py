@@ -147,3 +147,34 @@ class CrossEntropyWithL1(CompoundLoss):
 
         # return loss, loss_ce, loss_reg
         return loss
+
+
+class CrossEntropyWithKL(CompoundLoss):
+    """
+    Cross entropy loss with region size priors measured by l1.
+    The loss can be described as:
+        l = CE(X, Y) + alpha * |gt_region - prob_region|
+    """
+    def kl_div(self, p : torch.Tensor, q : torch.Tensor) -> torch.Tensor:
+        x = p * torch.log(p / q)
+        x = torch.einsum("ij->i", x)
+        return x
+
+    def forward(self, inputs: torch.Tensor, labels: torch.Tensor):
+        # import ipdb; ipdb.set_trace()
+        # ce term
+        if len(labels.shape) == len(inputs.shape):
+            assert labels.shape[1] == 1
+            labels = labels[:, 0]
+        labels = labels.long()
+
+        loss_ce = self.cross_entropy(inputs, labels)
+        # regularization
+        gt_proportion, valid_mask = self.get_gt_proportion(self.mode, labels, inputs.shape)
+        pred_proportion = self.get_pred_proportion(self.mode, inputs, temp=self.temp, valid_mask=valid_mask)
+        loss_reg = self.kl_div(gt_proportion, pred_proportion).mean()
+
+        loss = loss_ce + self.alpha * loss_reg
+
+        # return loss, loss_ce, loss_reg
+        return loss
