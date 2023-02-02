@@ -14,6 +14,7 @@
 
 
 import shutil
+import traceback
 from collections import OrderedDict
 from multiprocessing import Pool
 from time import sleep
@@ -608,9 +609,9 @@ class nnUNetTrainer(NetworkTrainer):
                 else:
                     softmax_fname = None
 
-                """There is a problem with python process communication that prevents us from communicating obejcts
+                """There is a problem with python process communication that prevents us from communicating objects
                 larger than 2 GB between processes (basically when the length of the pickle string that will be sent is
-                communicated by the multiprocessing.Pipe object then the placeholder (\%i I think) does not allow for long
+                communicated by the multiprocessing.Pipe object then the placeholder (I think) does not allow for long
                 enough strings (lol). This could be fixed by changing i to l (for long) but that would require manually
                 patching system python code. We circumvent that problem here by saving softmax_pred to a npy file that will
                 then be read (and finally deleted) by the Process. save_segmentation_nifti_from_softmax can take either
@@ -665,18 +666,17 @@ class nnUNetTrainer(NetworkTrainer):
         for f in subfiles(self.gt_niftis_folder, suffix=".nii.gz"):
             success = False
             attempts = 0
-            e = None
             while not success and attempts < 10:
                 try:
                     shutil.copy(f, gt_nifti_folder)
                     success = True
-                except OSError as e:
+                except OSError:
+                    print("Could not copy gt nifti file %s into folder %s" % (f, gt_nifti_folder))
+                    traceback.print_exc()
                     attempts += 1
                     sleep(1)
             if not success:
-                print("Could not copy gt nifti file %s into folder %s" % (f, gt_nifti_folder))
-                if e is not None:
-                    raise e
+                raise OSError(f"Something went wrong while copying nifti files to {gt_nifti_folder}. See above for the trace.")
 
         self.network.train(current_mode)
 
