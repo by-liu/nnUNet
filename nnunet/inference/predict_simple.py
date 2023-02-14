@@ -216,11 +216,12 @@ def main():
     assert isdir(model_folder_name), "model output folder not found. Expected: %s" % model_folder_name
 
     st = time()
+    # import ipdb; ipdb.set_trace()
     predict_from_folder(model_folder_name, input_folder, output_folder, folds, save_npz, num_threads_preprocessing,
                         num_threads_nifti_save, lowres_segmentations, part_id, num_parts, not disable_tta,
                         overwrite_existing=overwrite_existing, mode=mode, overwrite_all_in_gpu=all_in_gpu,
                         mixed_precision=not args.disable_mixed_precision,
-                        step_size=step_size, checkpoint_name=args.chk)
+                        step_size=step_size, checkpoint_name=args.chk, disable_postprocessing=True)
     end = time()
     save_json(end - st, join(output_folder, 'prediction_time.txt'))
 
