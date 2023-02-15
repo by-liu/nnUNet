@@ -9,6 +9,7 @@ from batchgenerators.utilities.file_and_folder_operations import load_pickle, wr
 
 # data_path = "./nnunet_data/nnUNet_preprocessed/Task004_Hippocampus/splits_final.pkl"
 # data_dir = "/home/bingyuan/scratch/Data/Task003_Liver"
+data_dir = "/home/bingyuan/scratch/Data/Task216_AMOS2022_task1"
 
 # #data_path = "./nnunet_data/nnUNet_preprocessed/Task005_Prostate/nnUNetPlansv2.1_plans_3D.pkl.bak"
 # #save_path = "./nnunet_data/nnUNet_preprocessed/Task005_Prostate/nnUNetPlansv2.1_plans_3D.pkl"
@@ -50,6 +51,14 @@ val = np.array(val)
 
 data[0]["train"] = train
 data[0]["val"] = val
+data_path = osp.join(data_dir, "nnUNetPlansv2.1_plans_3D.pkl")
+save_path = osp.join(data_dir, "nnUNetPlansv2.1_plans_3D_b4.pkl")
+
+data = load_pickle(data_path)
+
+for i in range(len(data["plans_per_stage"])):
+    data["plans_per_stage"][i]["batch_size"] = 4
+    print(data["plans_per_stage"][i])
 
 print("------------------------")
 print("train samples : ", data[0]["train"].shape)

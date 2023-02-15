@@ -1,11 +1,19 @@
 from batchgenerators.utilities.file_and_folder_operations import *
 import shutil
+import os.path as osp
 
 from nnunet.dataset_conversion.utils import generate_dataset_json
 from nnunet.paths import nnUNet_raw_data
 
+
+def load_list_from_file(file_path):
+    with open(file_path, "r") as f:
+        lines = f.readlines()
+        return [line.strip() for line in lines]
+
 if __name__ == '__main__':
-    amos_base = '/home/bliu/work/Data/nnunet_data/amos22'
+    # amos_base = '/home/bliu/work/Data/nnunet_data/amos22'
+    amos_base = '/home/bingyuan/scratch/Data/nnunet_data/amos22'
 
     # Arbitrary task id. This is just to ensure each dataset ha a unique number. Set this to whatever ([0-999]) you
     # want
@@ -28,7 +36,8 @@ if __name__ == '__main__':
     # dataset_json_source = load_json(join(amos_base, 'task1_dataset.json'))
     dataset_json_source = load_json(join(amos_base, 'dataset.json'))
 
-    training_identifiers = [i['image'].split('/')[-1][:-7] for i in dataset_json_source['training']]
+    # training_identifiers = [i['image'].split('/')[-1][:-7] for i in dataset_json_source['training']]
+    training_identifiers = load_list_from_file(osp.join(amos_base, "new_train.txt"))
 
     for tr in training_identifiers:
         print(tr)
@@ -39,12 +48,12 @@ if __name__ == '__main__':
 
     # test_identifiers = [i.split('/')[-1][:-7] for i in dataset_json_source['validation']]
     # test_identifiers = [i.split('/')[-1][:-7] for i in dataset_json_source['test']]
-    test_identifiers = [i['image'].split('/')[-1][:-7] for i in dataset_json_source['validation']]
+    # test_identifiers = [i['image'].split('/')[-1][:-7] for i in dataset_json_source['validation']]
 
-    for ts in test_identifiers:
-        print(ts)
-        shutil.copy(join(amos_base, 'imagesVa', ts + '.nii.gz'), join(imagests, f'{ts}_0000.nii.gz'))
-        shutil.copy(join(amos_base, 'labelsVa', ts + '.nii.gz'), join(labelsts, f'{ts}.nii.gz'))
+    # for ts in test_identifiers:
+    #     print(ts)
+    #     shutil.copy(join(amos_base, 'imagesVa', ts + '.nii.gz'), join(imagests, f'{ts}_0000.nii.gz'))
+    #     shutil.copy(join(amos_base, 'labelsVa', ts + '.nii.gz'), join(labelsts, f'{ts}.nii.gz'))
         # shutil.copy(join(amos_base, 'imagesTs', ts + '.nii.gz'), join(imagests, f'{ts}_0000.nii.gz'))
 
     generate_dataset_json(join(out_base, 'dataset.json'), imagestr, imagests, ("CT", ), dataset_json_source['labels'],
