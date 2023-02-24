@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from typing import Optional
+from nnunet.training.loss_functions.focal_loss import FocalLoss
+from nnunet.utilities.nd_softmax import softmax_helper
 
 BINARY_MODE: str = "binary"
 MULTICLASS_MODE: str = "multiclass"
@@ -43,7 +45,8 @@ def get_region_proportion(x: torch.Tensor, valid_mask: torch.Tensor = None) -> t
     else:
         cardinality = x.shape[2] * x.shape[3] * x.shape[4]
 
-    region_proportion = (torch.einsum("bcxyz->bc", x) + EPS) / (cardinality + EPS)
+    # region_proportion = (torch.einsum("bcxyz->bc", x) + EPS) / (cardinality + EPS)
+    region_proportion = (torch.sum(x, dim=(2, 3, 4)) + EPS) / (cardinality + EPS)
 
     return region_proportion
 
@@ -130,7 +133,6 @@ class CrossEntropyWithL1(CompoundLoss):
         l = CE(X, Y) + alpha * |gt_region - prob_region|
     """
     def forward(self, inputs: torch.Tensor, labels: torch.Tensor):
-        # import ipdb; ipdb.set_trace()
         # ce term
         if len(labels.shape) == len(inputs.shape):
             assert labels.shape[1] == 1
@@ -149,6 +151,31 @@ class CrossEntropyWithL1(CompoundLoss):
         return loss
 
 
+class FocalWithL1(CompoundLoss):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.focal = FocalLoss(apply_nonlin=softmax_helper)
+
+    def forward(self, inputs: torch.Tensor, labels: torch.Tensor):
+        # ce term
+        if len(labels.shape) == len(inputs.shape):
+            assert labels.shape[1] == 1
+            labels = labels[:, 0]
+        labels = labels.long()
+
+        loss_focal = self.focal(inputs, labels)
+        # regularization
+        gt_proportion, valid_mask = self.get_gt_proportion(self.mode, labels, inputs.shape)
+        pred_proportion = self.get_pred_proportion(self.mode, inputs, temp=self.temp, valid_mask=valid_mask)
+        loss_reg = (pred_proportion - gt_proportion).abs().mean()
+
+        loss = loss_focal + self.alpha * loss_reg
+
+        # return loss, loss_ce, loss_reg
+        return loss
+
+
+
 class CrossEntropyWithKL(CompoundLoss):
     """
     Cross entropy loss with region size priors measured by l1.
@@ -161,7 +188,6 @@ class CrossEntropyWithKL(CompoundLoss):
         return x
 
     def forward(self, inputs: torch.Tensor, labels: torch.Tensor):
-        # import ipdb; ipdb.set_trace()
         # ce term
         if len(labels.shape) == len(inputs.shape):
             assert labels.shape[1] == 1

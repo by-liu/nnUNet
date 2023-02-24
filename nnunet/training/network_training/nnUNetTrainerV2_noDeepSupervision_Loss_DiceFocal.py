@@ -11,15 +11,16 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
-from nnunet.training.loss_functions.crossentropy import RobustCrossEntropyLoss
+from nnunet.training.loss_functions.dice_loss import DC_and_Focal_loss
 from nnunet.training.network_training.nnUNet_variants.architectural_variants.nnUNetTrainerV2_noDeepSupervision import nnUNetTrainerV2_noDeepSupervision
 
 
-class nnUNetTrainerV2_noDeepSupervision_Loss_CE(nnUNetTrainerV2_noDeepSupervision):
+class nnUNetTrainerV2_noDeepSupervision_Loss_DiceFocal(nnUNetTrainerV2_noDeepSupervision):
     def __init__(self, plans_file, fold, output_folder=None, dataset_directory=None, batch_dice=True, stage=None,
                  unpack_data=True, deterministic=True, fp16=False):
         super().__init__(plans_file, fold, output_folder, dataset_directory, batch_dice, stage, unpack_data,
                          deterministic, fp16)
         self.max_num_epochs = 500
         self.initial_lr = 1e-2
-        self.loss = RobustCrossEntropyLoss()
+        self.loss = DC_and_Focal_loss({'batch_dice':self.batch_dice, 'smooth':1e-5,
+        	'do_bg':False}, {'alpha':0.5, 'gamma':2, 'smooth':1e-5})
